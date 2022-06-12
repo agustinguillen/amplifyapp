@@ -3,11 +3,13 @@ import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import MuiDrawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
+import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import Container from '@mui/material/Container';
@@ -19,9 +21,9 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { mainListItems, secondaryListItems } from './listItems';
-import Chart from './Chart';
-import Deposits from './Deposits';
-import Orders from './Orders';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { DataStore } from '@aws-amplify/datastore';
 import { Sale } from '../models';
 
@@ -95,31 +97,30 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 const mdTheme = createTheme();
 
-// Generate Sales Data
-function createData(time: string, amount?: number) {
-  return { time, amount };
-}
-
-function DashboardContent({user, signOut}: AuthenticatorProps) {
+function AddSalesContent({signOut}: AuthenticatorProps) {
   const [open, setOpen] = React.useState(true);
+  const [time, setTime] = React.useState(new Date());
+  const [amount, setAmount] = React.useState(0);
   const toggleDrawer = () => {
     setOpen(!open);
   };
-  const [data, setData] = React.useState<object[]>([]);
-  const getSalesData = async () => {
-    const newData = [];
-    const sales = await DataStore.query(Sale);
-    if (sales) {
-      for (const sale of sales) {
-        newData.push(createData(`${sale.time}`, sale.amount ? sale.amount : 0))
+
+  const handleSaveSale = async () => {
+    if (amount > 0) {
+      try {
+        const saveSale = await DataStore.save(
+          new Sale({
+          "time": `${time && new Date(time).toLocaleTimeString(navigator.language, {hour: '2-digit', minute:'2-digit'})}`,
+          "amount": amount
+        }));
+        alert(`Sale saved successfully, Time: ${saveSale.time}, Amount: ${saveSale.amount}`);
+      } catch (error) {
+        alert(`Something when wrong, error detail:\n ${error}`);
       }
-      setData(newData);
+    } else {
+      alert('Amount of sale must be greater than zero')
     }
   }
-
-  React.useEffect(() => {
-    getSalesData()
-  }, [])
 
   return (
     <ThemeProvider theme={mdTheme}>
@@ -150,7 +151,7 @@ function DashboardContent({user, signOut}: AuthenticatorProps) {
               noWrap
               sx={{ flexGrow: 1 }}
             >
-              Dashboard
+              Sales
             </Typography>
             <IconButton color="inherit">
               <Badge badgeContent={4} color="secondary">
@@ -198,7 +199,7 @@ function DashboardContent({user, signOut}: AuthenticatorProps) {
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
               {/* Chart */}
-              <Grid item xs={12} md={8} lg={9}>
+              <Grid item xs={12} md={8} lg={12}>
                 <Paper
                   sx={{
                     p: 2,
@@ -207,26 +208,44 @@ function DashboardContent({user, signOut}: AuthenticatorProps) {
                     height: 240,
                   }}
                 >
-                  <Chart data={data} />
-                </Paper>
-              </Grid>
-              {/* Recent Deposits */}
-              <Grid item xs={12} md={4} lg={3}>
-                <Paper
-                  sx={{
-                    p: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: 240,
-                  }}
-                >
-                  <Deposits />
-                </Paper>
-              </Grid>
-              {/* Recent Orders */}
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                  <Orders />
+                  <Grid container xs={10} md={6} lg={12}>
+                    <Box sx={{
+                      width: '45%',
+                      marginRight: '10%'
+                    }}>
+                      <Grid item>
+                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <TimePicker
+                          label="Time in hour format"
+                          value={time}
+                          onChange={e => e && setTime(e)}
+                          renderInput={(params) => <TextField {...params} margin="normal" fullWidth />}
+                        />
+                      </LocalizationProvider>
+                      </Grid>
+                    </Box>
+                    <Box sx={{
+                      width: '45%'
+                    }}>
+                      <Grid item>
+                        <TextField 
+                          id="amount-sales" 
+                          label="Amount of sale" 
+                          variant="outlined" 
+                          margin="normal" 
+                          fullWidth 
+                          InputProps={{ inputProps: {type: 'number', onChange: e => e && setAmount(Number((e.target as HTMLInputElement).value))}}}
+                        />
+                      </Grid>
+                    </Box>
+                    <Box sx={{
+                      width: '100%'
+                    }}>
+                      <Grid item>
+                        <Button variant="contained" onClick={() => handleSaveSale()}>Add Sale</Button>
+                      </Grid>
+                    </Box>
+                  </Grid>
                 </Paper>
               </Grid>
             </Grid>
@@ -238,6 +257,6 @@ function DashboardContent({user, signOut}: AuthenticatorProps) {
   );
 }
 
-export default function Dashboard({user, signOut}: AuthenticatorProps) {
-  return <DashboardContent user={user} signOut={signOut} />;
+export default function AddSales({user, signOut}: AuthenticatorProps) {
+  return <AddSalesContent user={user} signOut={signOut} />;
 }

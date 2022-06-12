@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 import Dashboard from './components/Dashboard'
+import Sales from './components/Sales'
 import {
   Routes,
   Route,
@@ -12,10 +13,15 @@ function App() {
   return (
     <div className="App">
       <Authenticator>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
+        {
+          ({user, signOut}) => (
+            <Routes>
+              <Route path="/" element={<Dashboard user={user ? user : {}} signOut={signOut ? signOut : () => {}} />} />
+              <Route path="/dashboard" element={<Dashboard user={user ? user : {}} signOut={signOut ? signOut : () => {}} />} />
+              <Route path="/sales" element={<Sales user={user ? user : {}} signOut={signOut ? signOut : () => {}} />} />
+            </Routes>
+          )
+        }
       </Authenticator>
     </div>
   );
