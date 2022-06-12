@@ -1,23 +1,22 @@
 import React from 'react';
 import './App.css';
 import Dashboard from './components/Dashboard'
-import SignUp from './components/SignUp'
-import SignIn from './components/SignIn'
 import {
-  BrowserRouter,
   Routes,
   Route,
-} from "react-router-dom";
+} from "react-router-dom"
+import { Authenticator } from '@aws-amplify/ui-react'
+import '@aws-amplify/ui-react/styles.css';
 
 function App() {
   return (
     <div className="App">
-      <Routes>
-        <Route path="/" element={<SignIn />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
+      <Authenticator>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
+      </Authenticator>
     </div>
   );
 }
